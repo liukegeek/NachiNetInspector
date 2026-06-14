@@ -11,18 +11,21 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class NachiNetInspectorApplication {
     private static final Logger LOGGER = LoggerFactory.getLogger(NachiNetInspectorApplication.class);
-    private static final int PORT = 2026;
-    private static final String URL = "http://localhost:2026";
+    static final String SERVER_ADDRESS = "127.0.0.1";
+    static final int PORT = 2026;
+    private static final String DESKTOP_URL = "http://localhost:" + PORT;
 
     public static void main(String[] args) {
         try {
-            SpringApplication.run(NachiNetInspectorApplication.class, args);
-            LOGGER.info("Nachi Net Inspector started at {}", URL);
-            openBrowser(URL);
+            SpringApplication application = new SpringApplication(NachiNetInspectorApplication.class);
+            application.addInitializers(new DesktopServerEnvironmentInitializer());
+            application.run(args);
+            LOGGER.info("Nachi Net Inspector started at {}", DESKTOP_URL);
+            openBrowser(DESKTOP_URL);
         } catch (RuntimeException exception) {
             if (isPortInUseException(exception)) {
-                LOGGER.info("Port {} is already in use; opening the existing instance at {}", PORT, URL);
-                openBrowser(URL);
+                LOGGER.info("Port {} is already in use; opening the existing instance at {}", PORT, DESKTOP_URL);
+                openBrowser(DESKTOP_URL);
                 return;
             }
             throw exception;
