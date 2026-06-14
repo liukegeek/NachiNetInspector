@@ -10,11 +10,15 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.ServletWebRequest;
 import tech.waitforu.exceptions.BackupLoadException;
 import tech.waitforu.exceptions.ExcelExportException;
 import tech.waitforu.inspectorweb.exception.ApiException;
@@ -23,6 +27,7 @@ import tech.waitforu.service.NetworkExcelExportService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -88,6 +93,25 @@ class GlobalExceptionHandlerTest {
         assertNotNull(error.getThrowableProxy());
         assertNotNull(error.getThrowableProxy().getCause());
         assertEquals("root cause detail", error.getThrowableProxy().getCause().getMessage());
+    }
+
+    @Test
+    void inheritedSpringMvcServerErrorUsesFixedMessageAndLogsException() throws Exception {
+        String internalMessage = "secret serializer implementation detail";
+        HttpMessageNotWritableException exception =
+                new HttpMessageNotWritableException(internalMessage);
+
+        ResponseEntity<Object> response = new GlobalExceptionHandler().handleException(
+                exception,
+                new ServletWebRequest(new MockHttpServletRequest()));
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        ErrorResponse errorResponse = assertInstanceOf(ErrorResponse.class, response.getBody());
+        assertEquals("服务器内部错误，请查看日志", errorResponse.message());
+        assertFalse(errorResponse.message().contains(internalMessage));
+        ILoggingEvent error = eventAt(Level.ERROR);
+        assertNotNull(error.getThrowableProxy());
+        assertEquals(internalMessage, error.getThrowableProxy().getMessage());
     }
 
     @Test

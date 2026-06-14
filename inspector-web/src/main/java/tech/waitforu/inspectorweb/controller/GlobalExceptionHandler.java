@@ -61,8 +61,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         } else {
             LOGGER.warn("Spring MVC request failed with status {}: {}", status.value(), exception.getMessage());
         }
+        String message = status.is5xxServerError() ? INTERNAL_SERVER_ERROR : exception.getMessage();
         return new ResponseEntity<>(
-                new ErrorResponse(status.value(), exception.getMessage()),
+                new ErrorResponse(status.value(), message),
                 headers,
                 status);
     }
