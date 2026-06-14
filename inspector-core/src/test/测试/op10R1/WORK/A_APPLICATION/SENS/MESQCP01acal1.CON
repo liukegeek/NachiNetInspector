@@ -1,0 +1,20 @@
+; Copyright(c) 2002 Daihen corporation. All Rights Reserved.
+;------------------------------------------------------------------------
+
+[MESPOS_HEADER]
+FILENAME=MESQCP01acal.INI
+VER=1.00.00
+DATE=03/020/2003
+EMESS=This is the input history file of MESQCP.
+JMESS=MESQCPの入力履歴ファイルです。
+PROTECT=0x0
+
+[MESPOS_CONDITION]
+TOOL_NO=1
+AUTOCAL_NO=0
+TOUCH_LOGIC=0
+SEARCH_SPEED=10
+MAX_SEARCH=30
+MIN_SEARCH=1
+POS_NUM=1
+MES_NUM=0

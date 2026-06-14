@@ -1,0 +1,20 @@
+" [ Robot Oscilloscope Data ] "
+"Block1"
+"Start Time:",2023/11/15,12:34:56
+"Trigger Data:",0
+"Sampling Length (sec):",20.0
+"Sampling Frequency (Hz):",100.0
+"Trigger Condition:",0
+"Trigger Timing (%):",0
+"Detail:",1,E,0026
+"Ch1 Source:",1,1,0,2,6
+"Ch2 Source:",1,1,0,2,5
+"Ch3 Source:",1,1,0,1,6
+"Ch4 Source:",1,1,0,1,5
+"Ch5 Source:",1,1,1,0,4
+"Ch6 Source:",1,1,1,0,5
+"Ch7 Source:",0,@,@,@,@
+"Ch8 Source:",0,@,@,@,@
+"Ch9 Source:",0,@,@,@,@
+"Ch10 Source:",0,@,@,@,@
+"EOF"

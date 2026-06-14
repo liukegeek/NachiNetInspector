@@ -1,0 +1,57 @@
+PROGRAM prgQLD
+#info= QLD
+
+
+BOF 
+
+(*Clamp1-Open*)
+
+SOR  [0,1] (**) (**)  XIC  [1,1]  (*I0[441]*) (**)  XIC  [2,1]  (*I0[443]*) (**)  XIC  [3,1]  (*I0[445]*) (**)  XIC  [4,1]  (*TRUE*) (**)  XIC  [5,1]  (*TRUE*) (**)  XIC  [6,1]  (*TRUE*) (**)  OTE  [7,1]  (*I0[1840]*) (**) 
+EOR  [8,1]
+
+
+(*Clamp1-Close*)
+
+SOR  [0,1] (**) (**)  XIC  [1,1]  (*I0[442]*) (**)  XIC  [2,1]  (*I0[444]*) (**)  XIC  [3,1]  (*I0[446]*) (**)  XIC  [4,1]  (*TRUE*) (**)  XIC  [5,1]  (*TRUE*) (**)  XIC  [6,1]  (*TRUE*) (**)  OTE  [7,1]  (*I0[1841]*) (**) 
+EOR  [8,1]
+
+
+(*Clamp2-Open*)
+
+SOR  [0,1] (**) (**)  XIC  [1,1]  (*TRUE*) (**)  XIC  [2,1]  (*TRUE*) (**)  XIC  [3,1]  (*TRUE*) (**)  XIC  [4,1]  (*TRUE*) (**)  XIC  [5,1]  (*TRUE*) (**)  XIC  [6,1]  (*TRUE*) (**)  OTE  [7,1]  (*I0[1842]*) (**) 
+EOR  [8,1]
+
+
+(*Clamp1-Open*)
+
+SOR  [0,1] (**) (**)  XIC  [1,1]  (*TRUE*) (**)  XIC  [2,1]  (*TRUE*) (**)  XIC  [3,1]  (*TRUE*) (**)  XIC  [4,1]  (*TRUE*) (**)  XIC  [5,1]  (*TRUE*) (**)  XIC  [6,1]  (*TRUE*) (**)  OTE  [7,1]  (*I0[1843]*) (**) 
+EOR  [8,1]
+
+
+(*Clamp2-Close*)
+
+SOR  [0,1] (**) (**)  XIC  [1,1]  (*TRUE*) (**)  XIC  [2,1]  (*TRUE*) (**)  XIC  [3,1]  (*TRUE*) (**)  XIC  [4,1]  (*TRUE*) (**)  XIC  [5,1]  (*TRUE*) (**)  XIC  [6,1]  (*TRUE*) (**)  OTE  [7,1]  (*I0[1844]*) (**) 
+EOR  [8,1]
+
+
+(*Clamp3-Open*)
+
+SOR  [0,1] (**) (**)  XIC  [1,1]  (*TRUE*) (**)  XIC  [2,1]  (*TRUE*) (**)  XIC  [3,1]  (*TRUE*) (**)  XIC  [4,1]  (*TRUE*) (**)  XIC  [5,1]  (*TRUE*) (**)  XIC  [6,1]  (*TRUE*) (**)  OTE  [7,1]  (*I0[1845]*) (**) 
+EOR  [8,1]
+
+
+(*Clamp3-Close*)
+
+SOR  [0,1] (**) (**)  XIC  [1,1]  (*TRUE*) (**)  XIC  [2,1]  (*TRUE*) (**)  XIC  [3,1]  (*TRUE*) (**)  XIC  [4,1]  (*TRUE*) (**)  XIC  [5,1]  (*TRUE*) (**)  XIC  [6,1]  (*TRUE*) (**)  OTE  [7,1]  (*I0[1846]*) (**) 
+EOR  [8,1]
+
+
+(*Clamp4-Open*)
+
+SOR  [0,1] (**) (**)  XIC  [1,1]  (*TRUE*) (**)  XIC  [2,1]  (*TRUE*) (**)  XIC  [3,1]  (*TRUE*) (**)  XIC  [4,1]  (*TRUE*) (**)  XIC  [5,1]  (*TRUE*) (**)  XIC  [6,1]  (*TRUE*) (**)  OTE  [7,1]  (*I0[1847]*) (**) 
+EOR  [8,1]
+
+
+EOF
+#end_info 
+END_PROGRAM

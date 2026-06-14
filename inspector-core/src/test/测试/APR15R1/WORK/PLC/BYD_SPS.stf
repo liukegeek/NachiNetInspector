@@ -1,0 +1,9 @@
+PROGRAM prgQLD
+#info= QLD
+
+
+BOF 
+
+EOF
+#end_info 
+END_PROGRAM

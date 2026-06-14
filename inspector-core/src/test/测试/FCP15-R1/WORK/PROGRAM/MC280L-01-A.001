@@ -1,0 +1,17 @@
+REM "MAIN"
+REM "--Main"
+REM "-------------------------------------------=_="
+REM "MAIN"
+*START
+CALLP 1001
+CALLP 1000
+SET O9
+WHILE V1%=0
+V1% = INPB(5)
+DELAY 0.2
+ENDW
+CALLP 1002
+CALLP 1003
+CALLP 1001
+GOTO *START
+END

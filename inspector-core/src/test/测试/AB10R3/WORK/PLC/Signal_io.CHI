@@ -1,0 +1,51 @@
+1,**********************PLC ×ªÂß¼­  IO¿ªÊ¼**************
+2,
+3,
+4,
+5,
+6,
+7,
+8,
+9,
+10,
+11,
+12,
+13,
+14,
+15,
+16,
+17,RIP__IO
+18,TIP -IO
+19,WaterOff
+20,Water Reset
+21,Water Fault
+22,Water  AIR  FAULT TO PLC
+23,dakai panglu
+24,TIMER ==> ROBOT
+25,TIMER ==>ROBOT
+26,Weld  Enable
+27,hanjie guifan
+28,TIMER fuwei
+29,qidong
+30,TimerFault!
+31,Timer NO Current Fault IN  AUT
+32,TIP Input
+33,TIP Output
+34,TIP Output
+35,TIP Output
+36,Dress_Fault(PLC-023)(ROBOT808)
+37,TIMER RIP PROFINE  CONNECT FAULT
+38,PLC PROFINE  CONNECT FAULT
+39,TIP Output
+40,
+41,
+42,
+43,
+44,
+45,Timer NO Current Fault IN  AUT
+46,Timer
+
+X1014,X1004
+X1017,X1017
+X1019,X1019
+X1021,X1021

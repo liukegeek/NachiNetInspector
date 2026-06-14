@@ -14,6 +14,7 @@
     <modules>
         <module>krl-core</module>
         <module>krl-web</module>
+        <module>inspector-core</module>
     </modules>
 
     <!-- 子模块属性 -->
