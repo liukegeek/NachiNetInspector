@@ -1,8 +1,16 @@
 package tech.waitforu.inspectorweb.controller;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,19 +18,51 @@ import org.springframework.web.bind.annotation.RestController;
 import tech.waitforu.exceptions.BackupLoadException;
 import tech.waitforu.exceptions.ExcelExportException;
 import tech.waitforu.inspectorweb.exception.ApiException;
+import tech.waitforu.inspectorweb.service.InspectionExecutionService;
+import tech.waitforu.service.NetworkExcelExportService;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class GlobalExceptionHandlerTest {
     private MockMvc mockMvc;
+    private Logger logger;
+    private ListAppender<ILoggingEvent> appender;
+    private boolean additive;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new ThrowingController())
+        logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        appender = new ListAppender<>();
+        additive = logger.isAdditive();
+        appender.start();
+        logger.addAppender(appender);
+        logger.setAdditive(false);
+
+        InspectionExecutionService service = new InspectionExecutionService(
+                path -> {
+                    throw new AssertionError("binding errors must not call the execution service");
+                },
+                new NetworkExcelExportService());
+        mockMvc = MockMvcBuilders.standaloneSetup(
+                        new ThrowingController(),
+                        new InspectionController(service))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        logger.setAdditive(additive);
+        logger.detachAppender(appender);
+        appender.stop();
     }
 
     @Test
@@ -31,6 +71,23 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.message").value("specified API failure"));
+
+        ILoggingEvent warning = eventAt(Level.WARN);
+        assertNull(warning.getThrowableProxy());
+        assertFalse(hasEventAt(Level.ERROR));
+    }
+
+    @Test
+    void mapsServerApiExceptionAndLogsItsCauseAtError() throws Exception {
+        mockMvc.perform(get("/throw/api-server"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.message").value("public server failure"));
+
+        ILoggingEvent error = eventAt(Level.ERROR);
+        assertNotNull(error.getThrowableProxy());
+        assertNotNull(error.getThrowableProxy().getCause());
+        assertEquals("root cause detail", error.getThrowableProxy().getCause().getMessage());
     }
 
     @Test
@@ -61,11 +118,59 @@ class GlobalExceptionHandlerTest {
                         org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("secret"))));
     }
 
+    @Test
+    void missingMultipartFilesRemainsStructuredBadRequest() throws Exception {
+        assertStandardClientError(multipart("/api/inspection"), 400);
+    }
+
+    @Test
+    void jsonContentTypeRemainsStructuredUnsupportedMediaType() throws Exception {
+        assertStandardClientError(
+                post("/api/inspection")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"),
+                415);
+    }
+
+    @Test
+    void unsupportedMethodRemainsStructuredMethodNotAllowed() throws Exception {
+        assertStandardClientError(get("/api/inspection"), 405);
+    }
+
+    @Test
+    void unknownPathRemainsStructuredNotFound() throws Exception {
+        assertStandardClientError(get("/api/not-found"), 404);
+    }
+
     private void assertBadRequest(String path, String message) throws Exception {
         mockMvc.perform(get(path))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value(message));
+    }
+
+    private void assertStandardClientError(RequestBuilder request, int statusCode) throws Exception {
+        mockMvc.perform(request)
+                .andExpect(status().is(statusCode))
+                .andExpect(jsonPath("$.status").value(statusCode))
+                .andExpect(jsonPath("$.message").isNotEmpty());
+
+        ILoggingEvent warning = eventAt(Level.WARN);
+        assertNull(warning.getThrowableProxy());
+        assertFalse(hasEventAt(Level.ERROR));
+    }
+
+    private ILoggingEvent eventAt(Level level) {
+        ILoggingEvent event = appender.list.stream()
+                .filter(candidate -> candidate.getLevel() == level)
+                .findFirst()
+                .orElse(null);
+        assertNotNull(event);
+        return event;
+    }
+
+    private boolean hasEventAt(Level level) {
+        return appender.list.stream().anyMatch(event -> event.getLevel() == level);
     }
 
     @RestController
@@ -74,6 +179,14 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/throw/api")
         void api() {
             throw new ApiException(HttpStatus.CONFLICT, "specified API failure");
+        }
+
+        @GetMapping("/throw/api-server")
+        void apiServer() {
+            throw new ApiException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "public server failure",
+                    new IllegalStateException("root cause detail"));
         }
 
         @GetMapping("/throw/illegal")

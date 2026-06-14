@@ -22,7 +22,7 @@ class RuntimeControllerTest {
                 Optional.of(new BuildProperties(properties)));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        mockMvc.perform(get("/api/runtime"))
+        mockMvc.perform(get("/api/runtime/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.appVersion").value("1.2.3"))
                 .andExpect(jsonPath("$.length()").value(1));
@@ -34,9 +34,19 @@ class RuntimeControllerTest {
                 .standaloneSetup(new RuntimeController(Optional.empty()))
                 .build();
 
-        mockMvc.perform(get("/api/runtime"))
+        mockMvc.perform(get("/api/runtime/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.appVersion").value(""))
                 .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void doesNotExposeOldRuntimeRoute() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders
+                .standaloneSetup(new RuntimeController(Optional.empty()))
+                .build();
+
+        mockMvc.perform(get("/api/runtime"))
+                .andExpect(status().isNotFound());
     }
 }

@@ -2,23 +2,31 @@ package tech.waitforu.inspectorweb.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import tech.waitforu.exceptions.BackupLoadException;
 import tech.waitforu.exceptions.ExcelExportException;
 import tech.waitforu.inspectorweb.exception.ApiException;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private static final String INTERNAL_SERVER_ERROR = "服务器内部错误，请查看日志";
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException exception) {
         HttpStatus status = exception.getStatus();
-        LOGGER.warn("API request failed with status {}: {}", status.value(), exception.getMessage());
+        if (status.is5xxServerError()) {
+            LOGGER.error("API request failed with status {}", status.value(), exception);
+        } else {
+            LOGGER.warn("API request failed with status {}: {}", status.value(), exception.getMessage());
+        }
         return response(status, exception.getMessage());
     }
 
@@ -38,6 +46,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception exception) {
         LOGGER.error("Unexpected API error", exception);
         return response(HttpStatus.INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(
+            Exception exception,
+            Object body,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request
+    ) {
+        if (status.is5xxServerError()) {
+            LOGGER.error("Spring MVC request failed with status {}", status.value(), exception);
+        } else {
+            LOGGER.warn("Spring MVC request failed with status {}: {}", status.value(), exception.getMessage());
+        }
+        return new ResponseEntity<>(
+                new ErrorResponse(status.value(), exception.getMessage()),
+                headers,
+                status);
     }
 
     private static ResponseEntity<ErrorResponse> response(HttpStatus status, String message) {

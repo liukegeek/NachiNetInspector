@@ -17,7 +17,7 @@ public class RuntimeController {
         this.appVersion = buildProperties.map(BuildProperties::getVersion).orElse("");
     }
 
-    @GetMapping
+    @GetMapping("/status")
     public Map<String, String> runtime() {
         return Map.of("appVersion", appVersion);
     }
