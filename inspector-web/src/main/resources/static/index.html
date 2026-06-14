@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nachi Net Inspector</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/styles.css">
+    <script defer src="vendor/cytoscape.min.js"></script>
+    <script defer src="vendor/dagre.min.js"></script>
+    <script defer src="vendor/cytoscape-dagre.min.js"></script>
+    <script defer src="vendor/lucide.js"></script>
+    <script defer src="js/app.js"></script>
+</head>
+<body>
+<header class="app-header">
+    <div class="brand">
+        <span class="brand-icon" aria-hidden="true"><i data-lucide="network"></i></span>
+        <span>
+            <strong>Nachi Net Inspector</strong>
+            <small>那智机器人网络备份检查工具</small>
+        </span>
+    </div>
+    <div class="header-actions" aria-label="检查操作">
+        <input id="fileUpload" type="file" multiple>
+        <button id="fileUploadButton" class="button button-blue" type="button">
+            <i data-lucide="upload-cloud" aria-hidden="true"></i><span>上传备份</span>
+        </button>
+        <button id="startInspectionButton" class="button button-blue" type="button" disabled>
+            <i data-lucide="play" aria-hidden="true"></i><span>开始解析</span>
+        </button>
+        <button id="exportExcelButton" class="button button-orange" type="button" disabled>
+            <i data-lucide="download" aria-hidden="true"></i><span>导出 Excel</span>
+        </button>
+        <span id="selectedFileCount" class="file-count">未选择文件</span>
+    </div>
+    <span id="appVersion" class="app-version" aria-label="应用版本"></span>
+</header>
+
+<main class="app-main">
+    <section id="emptyState" class="empty-state" aria-live="polite">
+        <span class="empty-icon" aria-hidden="true"><i data-lucide="network"></i></span>
+        <h1>从机器人网络拓扑开始检查</h1>
+        <p>上传一个或多个备份文件，然后点击“开始解析”。</p>
+    </section>
+
+    <aside id="resultSidebar" class="panel result-sidebar hidden" aria-label="解析结果"></aside>
+
+    <section id="resultWorkspace" class="workspace hidden" aria-live="polite">
+        <div id="summaryCards" class="summary-cards"></div>
+
+        <section class="panel topology-panel">
+            <div class="section-heading">
+                <span>
+                    <small>TOPOLOGY</small>
+                    <h2>网络拓扑</h2>
+                </span>
+                <span class="section-hint">点击节点查看完整网络信息</span>
+            </div>
+            <div id="topology" class="topology" aria-label="设备网络拓扑"></div>
+        </section>
+
+        <section id="warningSummary" class="warning-summary"></section>
+
+        <section class="panel table-panel">
+            <div class="section-heading">
+                <span>
+                    <small>DEVICES</small>
+                    <h2>设备清单</h2>
+                </span>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                    <tr><th>设备</th><th>IP</th><th>掩码</th><th>网关</th><th>来源文件</th></tr>
+                    </thead>
+                    <tbody id="deviceTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="deviceDetailPanel" class="panel device-detail"></section>
+    </section>
+</main>
+
+<div id="loadingOverlay" class="loading-overlay hidden" role="status" aria-live="assertive">
+    <div class="loading-card">
+        <i data-lucide="loader-circle" aria-hidden="true"></i>
+        <strong>正在处理文件...</strong>
+        <span>请稍候，不要重复提交。</span>
+    </div>
+</div>
+</body>
+</html>
