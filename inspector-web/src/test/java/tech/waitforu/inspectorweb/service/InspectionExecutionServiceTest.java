@@ -1,10 +1,16 @@
 package tech.waitforu.inspectorweb.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 import tech.waitforu.DeviceNet;
 import tech.waitforu.NachiNetResume;
+import tech.waitforu.exceptions.BackupLoadException;
 import tech.waitforu.inspectorweb.exception.BadRequestException;
 import tech.waitforu.inspectorweb.model.InspectionBatchResponse;
 import tech.waitforu.inspectorweb.model.InspectionItem;
@@ -52,6 +58,54 @@ class InspectionExecutionServiceTest {
         assertEquals(1, response.failedCount());
         assertNull(response.items().get(1).result());
         assertEquals("not a backup", response.items().get(1).errorMessage());
+    }
+
+    @Test
+    void unexpectedRunnerExceptionUsesControlledMessageAndLogsDisplayFilename() {
+        Logger logger = (Logger) LoggerFactory.getLogger(InspectionExecutionService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        boolean additive = logger.isAdditive();
+        appender.start();
+        logger.addAppender(appender);
+        logger.setAdditive(false);
+        try {
+            InspectionExecutionService service = service(path -> {
+                throw new RuntimeException("internal database password=secret");
+            });
+
+            InspectionItem item = service.inspect(List.of(upload("robot-display.backup", "bad")))
+                    .items().getFirst();
+
+            assertEquals(InspectionStatus.FAILED, item.status());
+            assertEquals("解析备份文件失败，请查看日志", item.errorMessage());
+            assertFalse(item.errorMessage().contains("internal database password=secret"));
+            assertTrue(appender.list.stream().anyMatch(event ->
+                    event.getLevel() == Level.ERROR
+                            && event.getFormattedMessage().contains("robot-display.backup")
+                            && event.getThrowableProxy() != null));
+        } finally {
+            logger.setAdditive(additive);
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
+    void expectedBackupAndInputErrorsRemainUserReadable() {
+        InspectionExecutionService service = service(path -> {
+            if (read(path).equals("load")) {
+                throw new BackupLoadException("无法打开备份文件");
+            }
+            throw new IllegalArgumentException("不支持的备份格式");
+        });
+
+        InspectionBatchResponse response = service.inspect(List.of(
+                upload("load.backup", "load"),
+                upload("invalid.backup", "invalid")));
+
+        assertEquals(
+                List.of("无法打开备份文件", "不支持的备份格式"),
+                response.items().stream().map(InspectionItem::errorMessage).toList());
     }
 
     @Test
@@ -115,7 +169,7 @@ class InspectionExecutionServiceTest {
         InspectionExecutionService service = service(path -> {
             observedPaths.add(path);
             if (read(path).equals("bad")) {
-                throw new IllegalStateException("inspection failed");
+                throw new IllegalArgumentException("inspection failed");
             }
             return result("good", true, device("body"), List.of(), List.of());
         });

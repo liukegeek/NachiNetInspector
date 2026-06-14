@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import tech.waitforu.NachiNetResume;
+import tech.waitforu.exceptions.BackupLoadException;
 import tech.waitforu.inspectorweb.exception.ApiException;
 import tech.waitforu.inspectorweb.exception.BadRequestException;
 import tech.waitforu.inspectorweb.model.InspectionBatchResponse;
@@ -27,6 +28,7 @@ public class InspectionExecutionService {
     private static final String UPLOAD_REQUIRED = "请上传备份文件";
     private static final String NO_EXPORTABLE_DATA = "没有可导出的网络设备信息";
     private static final String NO_USABLE_DATA = "未发现可用的网络设备信息";
+    private static final String INSPECTION_FAILED = "解析备份文件失败，请查看日志";
 
     private final BackupInspectionRunner runner;
     private final NetworkExcelExportService exporter;
@@ -49,12 +51,19 @@ public class InspectionExecutionService {
                     Path backupPath = temporaryDirectory.resolve(index + "-" + sanitize(sourceFileName));
                     copy(upload, backupPath);
                     items.add(classify(sourceFileName, runner.inspect(backupPath)));
-                } catch (Exception exception) {
+                } catch (BackupLoadException | IllegalArgumentException exception) {
                     items.add(new InspectionItem(
                             sourceFileName,
                             InspectionStatus.FAILED,
                             null,
                             readableMessage(exception)));
+                } catch (Exception exception) {
+                    LOGGER.error("Unexpected error inspecting uploaded backup {}", sourceFileName, exception);
+                    items.add(new InspectionItem(
+                            sourceFileName,
+                            InspectionStatus.FAILED,
+                            null,
+                            INSPECTION_FAILED));
                 }
             }
             return InspectionBatchResponse.from(items);
