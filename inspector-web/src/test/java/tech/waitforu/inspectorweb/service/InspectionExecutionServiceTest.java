@@ -80,6 +80,18 @@ class InspectionExecutionServiceTest {
     }
 
     @Test
+    void noUsableDevicesWithoutWarningsUsesExactFallbackMessage() {
+        InspectionExecutionService service = service(path ->
+                result("empty", false, null, null, List.of()));
+
+        InspectionItem item = service.inspect(List.of(upload("empty.zip", "empty"))).items().getFirst();
+
+        assertEquals(InspectionStatus.FAILED, item.status());
+        assertNull(item.result());
+        assertEquals("未发现可用的网络设备信息", item.errorMessage());
+    }
+
+    @Test
     void arbitraryExtensionsAndFilesWithoutExtensionsAreAccepted() {
         List<Path> observedPaths = new ArrayList<>();
         InspectionExecutionService service = service(path -> {

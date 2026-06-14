@@ -26,7 +26,7 @@ public class InspectionExecutionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(InspectionExecutionService.class);
     private static final String UPLOAD_REQUIRED = "请上传备份文件";
     private static final String NO_EXPORTABLE_DATA = "没有可导出的网络设备信息";
-    private static final String NO_USABLE_DATA = "未解析到网络设备信息";
+    private static final String NO_USABLE_DATA = "未发现可用的网络设备信息";
 
     private final BackupInspectionRunner runner;
     private final NetworkExcelExportService exporter;
