@@ -148,51 +148,51 @@ public class NachiInspector {
             ByteBuffer subNetByte = ByteBuffer.wrap(subNetFile).order(ByteOrder.LITTLE_ENDIAN);
 
             for (int i = 0; i < subNetMatchIndex.size(); i++) {
-                int subNetRecordStart = subNetMatchIndex.get(i);
-                if (subNetRecordStart + MIN_DEVICE_RECORD_SIZE > subNetFile.length) {
-                    exceptionMessage.add("机器人下该设备" + (i + 1) + "中，网络信息记录头的，后续数据长度不足，故而无法解析该设备的网络信息");
-                    continue;
+                try {
+                    int subNetRecordStart = subNetMatchIndex.get(i);
+                    int subNetNameLengthOffset = subNetRecordStart + CONFIG_DEVICE_NAME_LENGTH_REL;
+                    int subNetNameOffset = subNetRecordStart + CONFIG_DEVICE_NAME_REL;
+                    int subNetIPOffset = subNetRecordStart + CONFIG_DEVICE_IP_REL;
+                    int subNetMaskIPOffset = subNetRecordStart + CONFIG_DEVICE_MASK_REL;
+                    int subNetGatewayOffset = subNetRecordStart + CONFIG_DEVICE_GATEWAY_REL;
+
+                    requireAvailable(subNetFile, subNetNameLengthOffset, Short.BYTES, "设备名称长度");
+                    requireAvailable(subNetFile, subNetIPOffset, Integer.BYTES, "设备IP");
+                    requireAvailable(subNetFile, subNetMaskIPOffset, Integer.BYTES, "设备子网掩码");
+                    requireAvailable(subNetFile, subNetGatewayOffset, Integer.BYTES, "设备网关");
+
+                    // 名称长度在备份文件中是无符号短整数。
+                    int subNetNameLength = Short.toUnsignedInt(subNetByte.getShort(subNetNameLengthOffset));
+                    if (subNetNameLength > CONFIG_DEVICE_IP_REL - CONFIG_DEVICE_NAME_REL) {
+                        throw new InspectorException("设备名称长度超出记录范围，无法解析");
+                    }
+                    requireAvailable(subNetFile, subNetNameOffset, subNetNameLength, "设备名称");
+
+                    byte[] subNetNameBytes = new byte[subNetNameLength];
+                    subNetByte.get(subNetNameOffset, subNetNameBytes);
+                    String subNetName = new String(subNetNameBytes, StandardCharsets.UTF_8);
+
+                    String subNetIP = intToIpv4(subNetByte.getInt(subNetIPOffset));
+                    String subNetMaskIP = intToIpv4(subNetByte.getInt(subNetMaskIPOffset));
+                    String subNetGatewayIP = intToIpv4(subNetByte.getInt(subNetGatewayOffset));
+
+                    subDevicesNet.add(new DeviceNet(
+                            subNetName,
+                            subNetIP,
+                            subNetMaskIP,
+                            subNetGatewayIP,
+                            SUB_DEVICE_NET_FILE,
+                            toHexStr(CONFIG_DEVICE_RECORD_HEADER),
+                            toHexStr(subNetRecordStart),
+                            toHexStr(subNetNameLengthOffset),
+                            toHexStr(subNetNameOffset),
+                            toHexStr(subNetIPOffset),
+                            toHexStr(subNetMaskIPOffset),
+                            toHexStr(subNetGatewayOffset)
+                    ));
+                } catch (RuntimeException e) {
+                    exceptionMessage.add("解析机器人下该设备" + (i + 1) + "失败：" + readableMessage(e));
                 }
-
-                // 解析子设备名称长度
-                int subNetNameLengthOffset = subNetRecordStart + CONFIG_DEVICE_NAME_LENGTH_REL;
-                int subNetNameLength = subNetByte.position(subNetNameLengthOffset).getShort();
-
-                // 解析子设备名称
-                int subNetNameOffset = subNetRecordStart + CONFIG_DEVICE_NAME_REL;
-                byte[] subNetNameBytes = new byte[subNetNameLength];
-                subNetByte.position(subNetNameOffset).get(subNetNameBytes);
-                String subNetName = new String(subNetNameBytes, StandardCharsets.UTF_8);
-
-                // 解析子设备IP
-                int subNetIPOffset = subNetRecordStart + CONFIG_DEVICE_IP_REL;
-                int subNetIPInt = subNetByte.position(subNetIPOffset).getInt();
-                String subNetIP = intToIpv4(subNetIPInt);
-
-                // 解析子设备子网掩码
-                int subNetMaskIPOffset = subNetRecordStart + CONFIG_DEVICE_MASK_REL;
-                int subNetMaskIPInt = subNetByte.position(subNetMaskIPOffset).getInt();
-                String subNetMaskIP = intToIpv4(subNetMaskIPInt);
-
-                // 解析子设备网关
-                int subNetGatewayOffset = subNetRecordStart + CONFIG_DEVICE_GATEWAY_REL;
-                int subNetGatewayIPInt = subNetByte.position(subNetGatewayOffset).getInt();
-                String subNetGatewayIP = intToIpv4(subNetGatewayIPInt);
-
-                subDevicesNet.add(new DeviceNet(
-                        subNetName,
-                        subNetIP,
-                        subNetMaskIP,
-                        subNetGatewayIP,
-                        SUB_DEVICE_NET_FILE,
-                        toHexStr(CONFIG_DEVICE_RECORD_HEADER),
-                        toHexStr(subNetRecordStart),
-                        toHexStr(subNetNameLengthOffset),
-                        toHexStr(subNetNameOffset),
-                        toHexStr(subNetIPOffset),
-                        toHexStr(subNetMaskIPOffset),
-                        toHexStr(subNetGatewayOffset)
-                ));
             }
 
         } catch (InspectorException | InvalidParameterException e) {
@@ -285,6 +285,12 @@ public class NachiInspector {
         return message == null || message.isBlank()
                 ? exception.getClass().getSimpleName()
                 : message;
+    }
+
+    private static void requireAvailable(byte[] source, int offset, int length, String fieldName) {
+        if (offset < 0 || length < 0 || offset > source.length - length) {
+            throw new InspectorException(fieldName + "数据长度不足，无法解析");
+        }
     }
 
     private static String intToIpv4(int ipInt) throws InspectorException {
