@@ -1,0 +1,17 @@
+server:
+  address: 127.0.0.1
+  port: 2026
+spring:
+  application:
+    name: inspector-web
+  servlet:
+    multipart:
+      max-file-size: 1000MB
+      max-request-size: 1000MB
+logging:
+  file:
+    name: ${user.home}/.NachiNetInspector/logs/inspection.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 7

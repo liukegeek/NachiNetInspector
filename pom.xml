@@ -2,61 +2,33 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <!-- 根项目设置: groupId, artifactId, version, packaging -->
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>tech.waitforu</groupId>
-    <artifactId>KRLParser</artifactId>
+    <artifactId>NachiNetInspector</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <!-- 子模块列表 -->
     <modules>
-        <module>krl-core</module>
-        <module>krl-web</module>
         <module>inspector-core</module>
+        <module>inspector-web</module>
     </modules>
 
-    <!-- 子模块属性 -->
     <properties>
         <java.version>21</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- 统一版本，子模块直接用这些变量 -->
-        <antlr4.version>4.13.2</antlr4.version>
-        <!-- Spring Boot 版本（你现在是3.4.2） -->
         <spring-boot.version>3.4.2</spring-boot.version>
-        <ini4j.version>0.5.4</ini4j.version>
     </properties>
 
-    <!-- 统一管理依赖版本。包含在 dependencyManagement 中只会管理版本，不会编译。子模块就不需要写 version、config等了 -->
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Boot BOM(版本清单：Bill Of Materials)：一个“版本对照表”，里面规定了 Jackson、Tomcat、Hibernate、Netty… 等上百个库的推荐版本。
-            子模块写依赖时就能不写版本：版本由 BOM 统一决定，避免“依赖地狱”,让 krl-web 不需要用 spring-boot-starter-parent这种父 POM”，来提供默认配置
-            多模块通常用这种方式自建根父 POM来管理依赖版本。-->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-
-            <!--Jackson相关依赖已经在SpringBoot中包含，这里就不要写了，否则会覆盖冲突！-->
-
-            <!-- 项目里的Antlr4的固定依赖版本 -->
-            <dependency>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4</artifactId>
-                <version>${antlr4.version}</version>
-            </dependency>
-
-            <!-- 项目里的Ini4j的固定依赖版本 -->
-            <dependency>
-                <groupId>org.ini4j</groupId>
-                <artifactId>ini4j</artifactId>
-                <version>${ini4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -68,16 +40,12 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <inherited>false</inherited>
                 <configuration>
-                    <!-- 根项目只是聚合 POM，不是可启动的 Spring Boot 应用。 -->
                     <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>
-
-        <!-- 统一管理插件版本。写在pluginManagement中只会管理版本，但不会编译。子模块就不需要写 version、config等了 -->
         <pluginManagement>
             <plugins>
-                <!-- 编译插件：设置 Java 21 编译 -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -88,19 +56,14 @@
                         <parameters>true</parameters>
                     </configuration>
                 </plugin>
-
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring-boot.version}</version>
                     <configuration>
-                        <!-- 如果你有多个 @SpringBootApplication，显式指定主类；否则可省略 -->
-<!--                        <mainClass>tech.waitforu.krlweb.KrlWebApplication</mainClass>-->
                         <layers enabled="true"/>
                     </configuration>
                     <executions>
-                        <!--增加 <goal>repackage</goal> → mvn package 就会自动产出 可执行 jar（FatJar，而不是普通 jar）。-->
-                        <!--之后就能 java -jar target/xxx.jar 启动了（当然我们最终要用 jpackage 封装）。-->
                         <execution>
                             <goals>
                                 <goal>repackage</goal>
@@ -108,10 +71,7 @@
                         </execution>
                     </executions>
                 </plugin>
-
             </plugins>
-
-
         </pluginManagement>
     </build>
 </project>
