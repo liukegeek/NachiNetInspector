@@ -282,6 +282,7 @@ function renderTopology() {
                 'label': 'data(label)', 'shape': 'round-rectangle', 'width': 138, 'height': 58,
                 'background-color': '#3b82f6', 'color': '#ffffff', 'font-size': 12,
                 'font-weight': 700, 'text-wrap': 'wrap', 'text-max-width': 116,
+                'text-valign': 'center', 'text-halign': 'center',
                 'border-width': 3, 'border-color': '#ffffff',
                 'shadow-blur': 14, 'shadow-color': '#2563eb', 'shadow-opacity': 0.18
             }},
