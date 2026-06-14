@@ -238,6 +238,9 @@ buildNumber.properties
 node_modules/
 dist/
 
+### Superpowers visual brainstorming ###
+.superpowers/
+
 ### Local IDE State ###
 .idea/misc.xml
 .idea/vcs.xml
