@@ -22,9 +22,9 @@
         </span>
     </div>
     <div class="header-actions" aria-label="检查操作">
-        <input id="fileUpload" type="file" multiple>
+        <input id="fileUpload" type="file" webkitdirectory directory multiple>
         <button id="fileUploadButton" class="button button-blue" type="button">
-            <i data-lucide="upload-cloud" aria-hidden="true"></i><span>上传备份</span>
+            <i data-lucide="folder-open" aria-hidden="true"></i><span>选择备份</span>
         </button>
         <button id="startInspectionButton" class="button button-blue" type="button" disabled>
             <i data-lucide="play" aria-hidden="true"></i><span>开始解析</span>
@@ -32,7 +32,7 @@
         <button id="exportExcelButton" class="button button-orange" type="button" disabled>
             <i data-lucide="download" aria-hidden="true"></i><span>导出 Excel</span>
         </button>
-        <span id="selectedFileCount" class="file-count">未选择文件</span>
+        <span id="selectedFileCount" class="file-count">未选择备份目录</span>
     </div>
     <span id="appVersion" class="app-version" aria-label="应用版本"></span>
 </header>
@@ -41,7 +41,7 @@
     <section id="emptyState" class="empty-state" aria-live="polite">
         <span class="empty-icon" aria-hidden="true"><i data-lucide="network"></i></span>
         <h1>从机器人网络拓扑开始检查</h1>
-        <p>上传一个或多个备份文件，然后点击“开始解析”。</p>
+        <p>选择一个或多个备份目录，然后点击“开始解析”。可重复选择以累加目录。</p>
     </section>
 
     <aside id="resultSidebar" class="panel result-sidebar hidden" aria-label="解析结果"></aside>
@@ -86,7 +86,7 @@
 <div id="loadingOverlay" class="loading-overlay hidden" role="status" aria-live="assertive">
     <div class="loading-card">
         <i data-lucide="loader-circle" aria-hidden="true"></i>
-        <strong>正在处理文件...</strong>
+        <strong>正在处理备份目录...</strong>
         <span>请稍候，不要重复提交。</span>
     </div>
 </div>

@@ -52,8 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dom.fileUploadButton.addEventListener('click', () => dom.fileUpload.click());
     dom.fileUpload.addEventListener('change', (event) => {
-        state.files = Array.from(event.target.files || []);
-        updateActionState();
+        addSelectedDirectories(Array.from(event.target.files || []));
+        event.target.value = '';
     });
     dom.startInspectionButton.addEventListener('click', startInspection);
     dom.exportExcelButton.addEventListener('click', exportExcel);
@@ -86,7 +86,7 @@ async function startInspection() {
         return;
     }
     setLoading(true);
-    showMessage('正在解析备份文件...', false);
+    showMessage('正在解析备份目录...', false);
     try {
         const response = await fetch('/api/inspection', {method: 'POST', body: buildFormData()});
         if (!response.ok) {
@@ -136,8 +136,23 @@ async function exportExcel() {
 
 function buildFormData() {
     const formData = new FormData();
-    state.files.forEach((file) => formData.append('files', file));
+    state.files.forEach(({file, relativePath}) => formData.append('files', file, relativePath));
     return formData;
+}
+
+function addSelectedDirectories(files) {
+    const selected = files.map((file) => {
+        const relativePath = text(file.webkitRelativePath || file.name).replaceAll('\\', '/');
+        return {file, relativePath, directoryName: relativePath.split('/')[0]};
+    }).filter((entry) => entry.directoryName);
+    const selectedNames = new Set(selected.map((entry) => entry.directoryName));
+    state.files = state.files
+        .filter((entry) => !selectedNames.has(entry.directoryName))
+        .concat(selected);
+    state.batch = null;
+    state.selectedItemIndex = null;
+    state.selectedDeviceKey = null;
+    renderAll();
 }
 
 function selectResult(index) {
@@ -189,8 +204,11 @@ function renderSidebar() {
         const button = element('button', `result-item${index === state.selectedItemIndex ? ' active' : ''}`);
         button.type = 'button';
         const status = text(item && item.status) || 'FAILED';
+        const sourceDirectory = text(item && item.sourceFileName) || `备份目录 ${index + 1}`;
+        const robotName = text(value(resultOf(item), RESULT_KEYS.robotName));
         button.append(
-            element('strong', '', text(item && item.sourceFileName) || `文件 ${index + 1}`),
+            element('strong', '', robotName || sourceDirectory),
+            element('span', 'source-directory', `源目录：${sourceDirectory}`),
             element('span', `status-${status.toLowerCase()}`, statusLabel(status))
         );
         if (status === 'FAILED' && item && item.errorMessage) {
@@ -209,11 +227,12 @@ function renderSummary() {
         return;
     }
     const result = resultOf(item);
+    const root = devicesOf(item).root;
     const cards = [
         ['机器人', value(result, RESULT_KEYS.robotName), 'orange'],
         ['当前状态', statusLabel(item.status), 'blue'],
         ['子设备', String(devicesOf(item).children.length), 'blue'],
-        ['批次完成', `${number(state.batch.successfulCount) + number(state.batch.partialCount)} / ${batchItems().length}`, 'orange']
+        ['机器人本体 IP', value(root, 'IP'), 'orange']
     ];
     cards.forEach(([label, content, tone]) => {
         const card = element('article', `panel summary-card ${tone}`);
@@ -229,7 +248,7 @@ function renderTopology() {
         return;
     }
     if (item.status === 'FAILED') {
-        topologyMessage(item.errorMessage || '该文件解析失败，无法生成拓扑。');
+        topologyMessage(item.errorMessage || '该备份目录解析失败，无法生成拓扑。');
         return;
     }
     const devices = devicesOf(item);
@@ -309,7 +328,7 @@ function renderWarnings() {
         return;
     }
     if (item.status === 'FAILED') {
-        dom.warningSummary.append(element('div', 'warning-card error', item.errorMessage || '文件解析失败'));
+        dom.warningSummary.append(element('div', 'warning-card error', item.errorMessage || '备份目录解析失败'));
         return;
     }
     const warnings = value(resultOf(item), RESULT_KEYS.warnings);
@@ -346,11 +365,17 @@ function updateActionState() {
     const busy = isLoading();
     const hasFiles = state.files.length > 0;
     dom.startInspectionButton.disabled = !hasFiles || busy;
-    dom.exportExcelButton.disabled = !hasFiles || busy;
+    dom.exportExcelButton.disabled = !hasFiles || !batchHasExportableData() || busy;
     dom.fileUploadButton.disabled = busy;
-    dom.selectedFileCount.textContent = hasFiles
-        ? `已选择 ${state.files.length} 个文件`
-        : '未选择文件';
+    const directoryCount = new Set(state.files.map((entry) => entry.directoryName)).size;
+    dom.selectedFileCount.textContent = directoryCount
+        ? `已累加 ${directoryCount} 个备份目录`
+        : '未选择备份目录';
+}
+
+function batchHasExportableData() {
+    return batchItems().some((item) =>
+        item && (item.status === 'SUCCESS' || item.status === 'PARTIAL') && allDevices(item).length > 0);
 }
 
 function selectedItem() {
