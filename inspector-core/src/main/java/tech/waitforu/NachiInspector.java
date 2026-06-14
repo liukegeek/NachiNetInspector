@@ -4,18 +4,13 @@ import tech.waitforu.exceptions.InspectorException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * ClassName: NachiInspector
@@ -136,8 +131,10 @@ public class NachiInspector {
         } catch (InspectorException | InvalidParameterException e) {
             exceptionMessage.add(e.getMessage());
         } catch (InvalidPathException e) {
-            String message = "路径错误：" + e.getMessage();
+            String message = "路径错误：" + readableMessage(e);
             exceptionMessage.add(message);
+        } catch (RuntimeException e) {
+            exceptionMessage.add("解析机器人本体网络信息失败：" + readableMessage(e));
         }
 
         // 解析子设备网络信息
@@ -201,8 +198,10 @@ public class NachiInspector {
         } catch (InspectorException | InvalidParameterException e) {
             exceptionMessage.add(e.getMessage());
         } catch (InvalidPathException e) {
-            String message = "路径错误：" + e.getMessage();
+            String message = "路径错误：" + readableMessage(e);
             exceptionMessage.add(message);
+        } catch (RuntimeException e) {
+            exceptionMessage.add("解析子设备网络信息失败：" + readableMessage(e));
         }
 
 
@@ -240,8 +239,10 @@ public class NachiInspector {
         } catch (InspectorException | InvalidParameterException e) {
             exceptionMessage.add(e.getMessage());
         } catch (InvalidPathException e) {
-            String message = "路径错误：" + e.getMessage();
+            String message = "路径错误：" + readableMessage(e);
             exceptionMessage.add(message);
+        } catch (RuntimeException e) {
+            exceptionMessage.add("解析机器人本体名称失败：" + readableMessage(e));
         }
 
         // 如果没有异常，说明解析机器人成功，否则失败。
@@ -277,6 +278,13 @@ public class NachiInspector {
             }
         }
         return matchList;
+    }
+
+    private static String readableMessage(RuntimeException exception) {
+        String message = exception.getMessage();
+        return message == null || message.isBlank()
+                ? exception.getClass().getSimpleName()
+                : message;
     }
 
     private static String intToIpv4(int ipInt) throws InspectorException {

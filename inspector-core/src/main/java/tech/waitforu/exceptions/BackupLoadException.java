@@ -17,4 +17,8 @@ public class BackupLoadException extends RuntimeException {
     public BackupLoadException(String message) {
         super(message);
     }
+
+    public BackupLoadException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -1,9 +1,15 @@
 package tech.waitforu;
 
 
+import tech.waitforu.exceptions.BackupLoadException;
+
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * ClassName: BackFile
@@ -14,10 +20,10 @@ import java.nio.file.*;
  * Version 1.0
  */
 public class BackFile implements AutoCloseable {
-    private Path sourcePath; // 备份文件的原始路径
-    private FileSystem fileSystem; // 备份文件获取的文件系统对象
-    private Path rootPath; // 进行解析时的根路径。
-    private boolean needCloseFileSystem;
+    private final Path sourcePath; // 备份文件的原始路径
+    private final FileSystem fileSystem; // 备份文件获取的文件系统对象
+    private final Path rootPath; // 进行解析时的根路径。
+    private final boolean needCloseFileSystem;
 
 
     public BackFile(String sourcePath) {
@@ -42,8 +48,8 @@ public class BackFile implements AutoCloseable {
                 needCloseFileSystem = true;
             }
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException | RuntimeException e) {
+            throw new BackupLoadException("无法打开备份文件: " + this.sourcePath.getFileName(), e);
         }
 
     }
@@ -83,22 +89,6 @@ public class BackFile implements AutoCloseable {
         return sourcePath;
     }
 
-    public String getSourcePathAsString() {
-        return sourcePath.toString();
-    }
-
-    /**
-     * 获取备份文件中指定路径，相对于当前操作系统中的路径表示。
-     *
-     * @param pathString 备份文件所构成的文件系统中，要获取真实路径的文件路径字符串
-     * @return 相对于当前操作系统中的路径表示
-     * @throws InvalidPathException 如果路径字符串无效,则抛出 InvalidPathException
-     */
-    public String getPathInOs(String pathString) throws InvalidPathException {
-        Path path = fileSystem.getPath(pathString);
-        return Paths.get(sourcePath.toString(), path.toAbsolutePath().toString()).toString();
-    }
-
     /**
      * 打开指定路径的文件字节数组。
      *
@@ -109,26 +99,9 @@ public class BackFile implements AutoCloseable {
         Path path = resolvePath(pathString);
         try {
             return Files.readAllBytes(path);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException | RuntimeException e) {
+            throw new BackupLoadException("无法读取备份内文件: " + pathString, e);
         }
-    }
-
-    /**
-     * 读取指定路径的文件内容，转换为字符串。
-     *
-     * @param pathString 要读取的文件路径字符串
-     * @return 文件内容的字符串表示
-     * @throws RuntimeException 如果读取文件时发生错误
-     */
-    public String readStringByUTF8(String pathString) throws InvalidPathException {
-        Path path = resolvePath(pathString);
-        try {
-            return Files.readString(path, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
     }
 
     /**
