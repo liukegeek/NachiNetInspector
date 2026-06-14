@@ -240,6 +240,7 @@ dist/
 
 ### Superpowers visual brainstorming ###
 .superpowers/
+.worktrees/
 
 ### Local IDE State ###
 .idea/misc.xml
