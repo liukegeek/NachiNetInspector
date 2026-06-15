@@ -1,6 +1,0 @@
-# 将以下片段追加到服务器现有 Caddyfile 中。
-# 请将 `<your-domain>` 与 `<your-port>` 替换为你的实际域名和本机监听端口。
-
-<your-domain> {
-    reverse_proxy 127.0.0.1:<your-port>
-}
