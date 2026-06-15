@@ -31,11 +31,25 @@ jobs:
           java-version: "21"
           cache: maven
 
+      - name: Resolve build version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            BUILD_VERSION="${GITHUB_REF_NAME#v}"
+          else
+            BUILD_VERSION="0.0.${GITHUB_RUN_NUMBER}"
+          fi
+          if [[ ! "$BUILD_VERSION" =~ ^[0-9]+(\.[0-9]+){1,3}$ ]]; then
+            echo "Unsupported build version: $BUILD_VERSION" >&2
+            exit 1
+          fi
+          echo "BUILD_VERSION=$BUILD_VERSION" >> "$GITHUB_ENV"
+
       - name: Build and test
         shell: bash
         run: |
           set -euo pipefail
-          BUILD_VERSION="1.0.${GITHUB_RUN_NUMBER}"
           mvn -B versions:set \
             -DnewVersion="$BUILD_VERSION" \
             -DgenerateBackupPoms=false \
@@ -48,7 +62,6 @@ jobs:
           set -euo pipefail
           APP_NAME="Nachi Net Inspector"
           ASSET_NAME="NachiNetInspector"
-          BUILD_VERSION="1.0.${GITHUB_RUN_NUMBER}"
 
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             ICON_PATH="icons/windowsIcon.ico"
