@@ -34,4 +34,16 @@ class NachiNetInspectorApplicationTest {
         assertThat(content, containsString("Nachi Net Inspector"));
         assertThat(content, containsString("开始解析"));
     }
+
+    @Test
+    void topologyNodesShowDeviceNameAndIpInsideNode() throws Exception {
+        MvcResult appScript = mockMvc.perform(get("/js/app.js"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = new String(appScript.getResponse().getContentAsByteArray(), StandardCharsets.UTF_8);
+        assertThat(content, containsString("function topologyLabel"));
+        assertThat(content, containsString("return ip ? `${name}\\n${ip}` : name;"));
+        assertThat(content, containsString("'text-valign': 'center', 'text-halign': 'center'"));
+    }
 }

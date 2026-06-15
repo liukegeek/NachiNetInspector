@@ -265,12 +265,12 @@ function renderTopology() {
     const elements = [{
         data: {
             id: 'robot-body',
-            label: value(root, '名称') || value(resultOf(item), RESULT_KEYS.robotName) || '机器人本体'
+            label: topologyLabel(root, value(resultOf(item), RESULT_KEYS.robotName) || '机器人本体')
         },
         classes: 'robot'
     }];
     devices.children.forEach(({device, key}) => {
-        elements.push({data: {id: key, label: value(device, '名称') || key}, classes: 'child'});
+        elements.push({data: {id: key, label: topologyLabel(device, key)}, classes: 'child'});
         elements.push({data: {id: `edge-${key}`, source: 'robot-body', target: key}});
     });
 
@@ -487,6 +487,12 @@ async function readError(response) {
 
 function value(object, key) {
     return object && Object.prototype.hasOwnProperty.call(object, key) ? object[key] : null;
+}
+
+function topologyLabel(device, fallbackName) {
+    const name = text(value(device, '名称')).trim() || text(fallbackName).trim();
+    const ip = text(value(device, 'IP')).trim();
+    return ip ? `${name}\n${ip}` : name;
 }
 
 function displayField(input) {
