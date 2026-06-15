@@ -44,7 +44,7 @@ class InspectionExecutionServiceTest {
             try (var files = Files.walk(path)) {
                 observedFiles.addAll(files
                         .filter(Files::isRegularFile)
-                        .map(file -> path.getFileName() + "/" + path.relativize(file)
+                        .map(file -> path.getFileName() + "/" + path.relativize(file).toString().replace('\\', '/')
                                 + "=" + read(file))
                         .toList());
             } catch (IOException exception) {
